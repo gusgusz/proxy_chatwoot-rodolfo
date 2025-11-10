@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  # O nome do serviço do seu proxy-filtro
   chatwoot-proxy-filter: 
-    build: .
-    image: chatwoot-proxy-filter:latest
+    # Linhas 'build' e 'image: local' REMOVIDAS
+    # Esta é a nova linha que puxa do Docker Hub:
+    image: gusgusz/proxy-chatwoot:latest 
     container_name: chatwoot-proxy-filter
     restart: unless-stopped
     
@@ -14,25 +14,15 @@ services:
     
     labels:
       - "traefik.enable=true"
-      
-      # 1. Nome da Rede (o mesmo do seu Chatwoot)
       - "traefik.docker.network=RodolfoServer"
-      
-      # 2. Regra do Host (o seu novo domínio)
       - "traefik.http.routers.chatwoot-proxy.rule=Host(`proxy.rodolfoborges.app.br`)"
       - "traefik.http.routers.chatwoot-proxy.entrypoints=websecure"
-      
-      # 3. Nome do Resolvedor (o mesmo do seu Chatwoot)
       - "traefik.http.routers.chatwoot-proxy.tls.certresolver=letsencryptresolver"
-      
-      # 4. Porta interna do container
       - "traefik.http.services.chatwoot-proxy.loadbalancer.server.port=3000"
 
     networks:
-      # 5. Conecta este container à sua rede principal
       - RodolfoServer
 
 networks:
-  # 6. Declara que a rede já existe
   RodolfoServer:
     external: true
