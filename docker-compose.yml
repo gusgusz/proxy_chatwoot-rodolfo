@@ -1,38 +1,20 @@
-version: '3.8'
+# Use uma imagem Node.js oficial e leve
+FROM node:18-alpine
 
-services:
-  # O nome do serviço do seu proxy-filtro
-  chatwoot-proxy-filter: 
-    build: .
-    image: chatwoot-proxy-filter:latest
-    container_name: chatwoot-proxy-filter
-    restart: unless-stopped
-    
-    environment:
-      - N8N_WEBHOOK_URL=https://nwook.rodolfoborges.app.br/webhook/oficial
-      - PORT=3000
-    
-    labels:
-      - "traefik.enable=true"
-      
-      # 1. Nome da Rede (o mesmo do seu Chatwoot)
-      - "traefik.docker.network=RodolfoServer"
-      
-      # 2. Regra do Host (o seu novo domínio)
-      - "traefik.http.routers.chatwoot-proxy.rule=Host(`proxy.rodolfoborges.app.br`)"
-      - "traefik.http.routers.chatwoot-proxy.entrypoints=websecure"
-      
-      # 3. Nome do Resolvedor (o mesmo do seu Chatwoot)
-      - "traefik.http.routers.chatwoot-proxy.tls.certresolver=letsencryptresolver"
-      
-      # 4. Porta interna do container
-      - "traefik.http.services.chatwoot-proxy.loadbalancer.server.port=3000"
+# Define o diretório de trabalho dentro do container
+WORKDIR /usr/src/app
 
-    networks:
-      # 5. Conecta este container à sua rede principal
-      - RodolfoServer
+# Copia o package.json (e package-lock.json se existir)
+COPY package*.json ./
 
-networks:
-  # 6. Declara que a rede já existe
-  RodolfoServer:
-    external: true
+# Instala somente as dependências de produção
+RUN npm install --omit=dev
+
+# Copia o resto do código (o index.js)
+COPY . .
+
+# Expõe a porta que o app vai rodar
+EXPOSE 3000
+
+# Comando padrão para iniciar o app (O CORRETO)
+CMD [ "npm", "start" ]
