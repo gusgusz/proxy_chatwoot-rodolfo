@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    networks:
+      - proxy-network
+    restart: unless-stopped
+
+  proxy-chatwoot:
+    build: .
+    container_name: proxy-chatwoot
+    environment:
+      - PORT=3000
+      - CHATWOOT_URL=http://chatwoot:3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.proxy-chatwoot.rule=Host(`your-domain.com`)"
+      - "traefik.http.routers.proxy-chatwoot.entrypoints=websecure"
+      - "traefik.http.routers.proxy-chatwoot.tls.certresolver=letsencrypt"
+      - "traefik.http.services.proxy-chatwoot.loadbalancer.server.port=3000"
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.proxy-chatwoot-http.rule=Host(`your-domain.com`)"
+      - "traefik.http.routers.proxy-chatwoot-http.entrypoints=web"
+      - "traefik.http.routers.proxy-chatwoot-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    networks:
+      - proxy-network
+    restart: unless-stopped
+    depends_on:
+      - traefik
+
+networks:
+  proxy-network:
+    name: proxy-network
+    driver: bridge
