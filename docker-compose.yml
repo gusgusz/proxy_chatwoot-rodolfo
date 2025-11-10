@@ -4,7 +4,7 @@ services:
   chatwoot-proxy-filter: 
     # Linhas 'build' e 'image: local' REMOVIDAS
     # Esta é a nova linha que puxa do Docker Hub:
-    image: gusgusz/proxy-chatwoot:latest 
+    image: proxy-local:latest
     container_name: chatwoot-proxy-filter
     restart: unless-stopped
     
