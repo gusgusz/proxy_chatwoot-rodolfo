@@ -18,7 +18,6 @@ app.post('/webhook', async (req, res) => {
   const payload = req.body;
 
   // 3. A LÓGICA DE FILTRO CORRETA
-  //    Checa o campo 'message_type' no corpo principal do JSON
   if (payload.event === 'message_created' && payload.message_type === 'incoming') {
     
     console.log('Filtro: Mensagem de cliente. Encaminhando para n8n...');
@@ -29,7 +28,6 @@ app.post('/webhook', async (req, res) => {
     });
 
   } else {
-    // Se for mensagem do bot ('outgoing'), nota, etc., ele ignora.
     console.log('Filtro: Mensagem do bot/sistema ignorada.');
   }
 
