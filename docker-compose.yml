@@ -7,6 +7,9 @@ services:
     image: proxy-local:latest
     container_name: chatwoot-proxy-filter
     restart: unless-stopped
+
+    healthcheck:
+      disable: true
     
     environment:
       - N8N_WEBHOOK_URL=https://nwook.rodolfoborges.app.br/webhook/oficial
