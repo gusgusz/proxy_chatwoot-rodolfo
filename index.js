@@ -1,30 +1,23 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const CHATWOOT_URL = process.env.CHATWOOT_URL || 'http://chatwoot:3000';
+app.use(express.json());
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', service: 'proxy-chatwoot' });
+app.post('/webhook', (req, res) => {
+    const messages = req.body.messages;
+    const incomingMessages = messages.filter(message => message.type === 'incoming');
+    
+    incomingMessages.forEach(message => {
+        axios.post('https://n8n-instance/webhook-url', message)
+            .then(response => console.log('Message sent to n8n:', response.data))
+            .catch(error => console.error('Error sending message to n8n:', error));
+    });
+
+    res.status(200).send('Messages processed');
 });
 
-// Proxy all requests to Chatwoot
-app.use('/', createProxyMiddleware({
-  target: CHATWOOT_URL,
-  changeOrigin: true,
-  ws: true, // Enable WebSocket support
-  onError: (err, req, res) => {
-    console.error('Proxy error:', err);
-    res.status(502).json({ error: 'Proxy error', message: err.message });
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  }
-}));
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Proxy server running on port ${PORT}`);
-  console.log(`Forwarding to: ${CHATWOOT_URL}`);
+    console.log(`Server is running on port ${PORT}`);
 });
